@@ -59,3 +59,17 @@ func result(l *lua.State, resp *http.Response, err error) int {
 	l.SetMetaTable(-2)
 	return 1
 }
+
+func header(l *lua.State, h http.Header) {
+	l.NewTable(0, len(h))
+	for k, v := range h {
+		l.Push(k)
+		l.NewTable(len(v), 0)
+		for i, x := range v {
+			l.Push(i + 1)
+			l.Push(x)
+			l.SetTableRaw(-3)
+		}
+		l.SetTableRaw(-3)
+	}
+}
