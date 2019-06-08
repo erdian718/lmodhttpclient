@@ -42,6 +42,10 @@ func Open(l *lua.State) int {
 	l.Push("0.0.1")
 	l.SetTableRaw(-3)
 
+	l.Push("head")
+	l.PushClosure(lHead, m)
+	l.SetTableRaw(-3)
+
 	l.Push("get")
 	l.PushClosure(lGet, m)
 	l.SetTableRaw(-3)
@@ -49,8 +53,17 @@ func Open(l *lua.State) int {
 	return 1
 }
 
+func lHead(l *lua.State) int {
+	resp, err := http.Head(l.ToString(1))
+	return result(l, resp, err)
+}
+
 func lGet(l *lua.State) int {
 	resp, err := http.Get(l.ToString(1))
+	return result(l, resp, err)
+}
+
+func result(l *lua.State, resp *http.Response, err error) int {
 	if err != nil {
 		if resp != nil {
 			resp.Body.Close()
