@@ -51,6 +51,10 @@ func Open(l *lua.State) int {
 	l.PushClosure(lPost, m)
 	l.SetTableRaw(-3)
 
+	l.Push("fetch")
+	l.PushClosure(lFetch, m)
+	l.SetTableRaw(-3)
+
 	return 1
 }
 
@@ -72,5 +76,31 @@ func lPost(l *lua.State) int {
 	} else {
 		resp, err = http.PostForm(l.ToString(1), toForm(l, 3))
 	}
+	return result(l, resp, err)
+}
+
+func lFetch(l *lua.State) int {
+	l.Push("method")
+	l.GetTable(1)
+	method := l.ToString(-1)
+
+	l.Push("url")
+	l.GetTable(1)
+	url := l.ToString(-1)
+
+	var body io.Reader
+	l.Push("body")
+	if l.GetTable(1) != lua.TypeNil {
+		body = l.GetRaw(-1).(io.Reader)
+	}
+
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return result(l, nil, err)
+	}
+
+	// TODO header
+
+	resp, err := http.DefaultClient.Do(req)
 	return result(l, resp, err)
 }
