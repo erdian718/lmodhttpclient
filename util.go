@@ -25,9 +25,17 @@ package lmodhttpclient
 import (
 	"io"
 	"net/http"
+	"net/http/cookiejar"
 
 	"ofunc/lua"
+
+	"golang.org/x/net/publicsuffix"
 )
+
+func init() {
+	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	http.DefaultClient.Jar = jar
+}
 
 func toReader(l *lua.State, i int) io.Reader {
 	if v, ok := l.GetRaw(i).(io.Reader); ok {

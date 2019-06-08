@@ -29,10 +29,6 @@ import (
 	"ofunc/lua"
 )
 
-func init() {
-	// TODO cookie jar
-}
-
 // Open opens the module.
 func Open(l *lua.State) int {
 	m := metaResp(l)
