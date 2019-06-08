@@ -23,48 +23,39 @@ misrepresented as being the original software.
 package lmodhttpclient
 
 import (
+	"io"
 	"net/http"
 
 	"ofunc/lua"
 )
 
-type response struct {
-	*http.Response
-}
-
-func (resp response) Read(p []byte) (int, error) {
-	return resp.Body.Read(p)
-}
-
-func metaResp(l *lua.State) int {
-	l.NewTable(0, 2)
-	idx := l.AbsIndex(-1)
-
-	l.Push("__index")
-	l.Push(lRespIndex)
-	l.SetTableRaw(idx)
-
-	return idx
-}
-
-func lRespIndex(l *lua.State) int {
-	resp := toResp(l, 1)
-	switch key := l.ToString(2); key {
-	case "status":
-		l.Push(resp.StatusCode)
-	case "header":
-		l.Push(resp.Header) // TODO
-	case "close":
-		l.Push(lRespClose)
-	}
-	return 1
-}
-
-func lRespClose(l *lua.State) int {
-	if err := toResp(l, 1).Body.Close(); err == nil {
-		return 0
+func toReader(l *lua.State, i int) io.Reader {
+	if v, ok := l.GetRaw(i).(io.Reader); ok {
+		return v
 	} else {
-		l.Push(err.Error())
-		return 1
+		panic("http/client: not a reader")
 	}
+}
+
+func toResp(l *lua.State, i int) response {
+	if v, ok := l.GetRaw(i).(response); ok {
+		return v
+	} else {
+		panic("http/client: not a response")
+	}
+}
+
+func result(l *lua.State, resp *http.Response, err error) int {
+	if err != nil {
+		if resp != nil {
+			resp.Body.Close()
+		}
+		l.Push(nil)
+		l.Push(err.Error())
+		return 2
+	}
+	l.Push(response{resp})
+	l.PushIndex(lua.FirstUpVal - 1)
+	l.SetMetaTable(-2)
+	return 1
 }

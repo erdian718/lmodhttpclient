@@ -50,6 +50,10 @@ func Open(l *lua.State) int {
 	l.PushClosure(lGet, m)
 	l.SetTableRaw(-3)
 
+	l.Push("post")
+	l.PushClosure(lPost, m)
+	l.SetTableRaw(-3)
+
 	return 1
 }
 
@@ -63,17 +67,7 @@ func lGet(l *lua.State) int {
 	return result(l, resp, err)
 }
 
-func result(l *lua.State, resp *http.Response, err error) int {
-	if err != nil {
-		if resp != nil {
-			resp.Body.Close()
-		}
-		l.Push(nil)
-		l.Push(err.Error())
-		return 2
-	}
-	l.Push(response{resp})
-	l.PushIndex(lua.FirstUpVal - 1)
-	l.SetMetaTable(-2)
-	return 1
+func lPost(l *lua.State) int {
+	resp, err := http.Post(l.ToString(1), l.ToString(2), toReader(l, 3))
+	return result(l, resp, err)
 }
