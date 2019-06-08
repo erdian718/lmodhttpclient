@@ -24,6 +24,7 @@ misrepresented as being the original software.
 package lmodhttpclient
 
 import (
+	"io"
 	"net/http"
 
 	"ofunc/lua"
@@ -64,6 +65,12 @@ func lGet(l *lua.State) int {
 }
 
 func lPost(l *lua.State) int {
-	resp, err := http.Post(l.ToString(1), l.ToString(2), toReader(l, 3))
+	var resp *http.Response
+	var err error
+	if r, ok := l.GetRaw(3).(io.Reader); ok {
+		resp, err = http.Post(l.ToString(1), l.ToString(2), r)
+	} else {
+		resp, err = http.PostForm(l.ToString(1), toForm(l, 3))
+	}
 	return result(l, resp, err)
 }

@@ -23,9 +23,9 @@ misrepresented as being the original software.
 package lmodhttpclient
 
 import (
-	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 
 	"ofunc/lua"
 
@@ -37,20 +37,46 @@ func init() {
 	http.DefaultClient.Jar = jar
 }
 
-func toReader(l *lua.State, i int) io.Reader {
-	if v, ok := l.GetRaw(i).(io.Reader); ok {
-		return v
-	} else {
-		panic("http/client: not a reader")
-	}
-}
-
 func toResp(l *lua.State, i int) response {
 	if v, ok := l.GetRaw(i).(response); ok {
 		return v
 	} else {
 		panic("http/client: not a response")
 	}
+}
+
+func toForm(l *lua.State, i int) url.Values {
+	form := make(url.Values, l.Count(i))
+	l.ForEach(i, func() bool {
+		k := l.ToString(-2)
+		if l.GetMetaField(-1, "__pairs") != lua.TypeNil {
+			l.Pop(1)
+			l.ForEach(-1, func() bool {
+				form.Add(k, l.ToString(-1))
+				return true
+			})
+		} else if l.GetMetaField(-1, "__len") != lua.TypeNil {
+			l.PushIndex(-2)
+			l.Call(1, 1)
+			n := int(l.ToInteger(-1))
+			l.Pop(1)
+			for i := 1; i <= n; i++ {
+				l.Push(i)
+				l.GetTable(-2)
+				form.Add(k, l.ToString(-1))
+				l.Pop(1)
+			}
+		} else if l.TypeOf(-1) == lua.TypeTable {
+			l.ForEachRaw(-1, func() bool {
+				form.Add(k, l.ToString(-1))
+				return true
+			})
+		} else {
+			form.Add(k, l.ToString(-1))
+		}
+		return true
+	})
+	return form
 }
 
 func result(l *lua.State, resp *http.Response, err error) int {
