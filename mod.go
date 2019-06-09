@@ -26,6 +26,7 @@ package lmodhttpclient
 import (
 	"io"
 	"net/http"
+	"net/url"
 
 	"ofunc/lua"
 )
@@ -55,6 +56,10 @@ func Open(l *lua.State) int {
 	l.PushClosure(lFetch, m)
 	l.SetTableRaw(-3)
 
+	l.Push("encode")
+	l.Push(lEncode)
+	l.SetTableRaw(-3)
+
 	return 1
 }
 
@@ -74,12 +79,18 @@ func lPost(l *lua.State) int {
 	if r, ok := l.GetRaw(3).(io.Reader); ok {
 		resp, err = http.Post(l.ToString(1), l.ToString(2), r)
 	} else {
-		resp, err = http.PostForm(l.ToString(1), toForm(l, 3))
+		resp, err = http.PostForm(l.ToString(1), t2m(l, 3, nil))
 	}
 	return result(l, resp, err)
 }
 
 func lFetch(l *lua.State) int {
+	var body io.Reader
+	l.Push("body")
+	if l.GetTable(1) != lua.TypeNil {
+		body = l.GetRaw(-1).(io.Reader)
+	}
+
 	l.Push("method")
 	l.GetTable(1)
 	method := l.ToString(-1)
@@ -88,19 +99,21 @@ func lFetch(l *lua.State) int {
 	l.GetTable(1)
 	url := l.ToString(-1)
 
-	var body io.Reader
-	l.Push("body")
-	if l.GetTable(1) != lua.TypeNil {
-		body = l.GetRaw(-1).(io.Reader)
-	}
-
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return result(l, nil, err)
 	}
 
-	// TODO header
+	l.Push("header")
+	if l.GetTable(1) == lua.TypeTable {
+		t2m(l, -1, req.Header)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	return result(l, resp, err)
+}
+
+func lEncode(l *lua.State) int {
+	l.Push(url.Values(t2m(l, 1, nil)).Encode())
+	return 1
 }

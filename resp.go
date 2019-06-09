@@ -53,7 +53,7 @@ func lRespIndex(l *lua.State) int {
 	case "status":
 		l.Push(resp.StatusCode)
 	case "header":
-		header(l, resp.Header)
+		m2t(l, resp.Header)
 	case "close":
 		l.Push(lRespClose)
 	}

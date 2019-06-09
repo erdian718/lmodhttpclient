@@ -25,7 +25,6 @@ package lmodhttpclient
 import (
 	"net/http"
 	"net/http/cookiejar"
-	"net/url"
 
 	"ofunc/lua"
 
@@ -37,22 +36,30 @@ func init() {
 	http.DefaultClient.Jar = jar
 }
 
-func toResp(l *lua.State, i int) response {
-	if v, ok := l.GetRaw(i).(response); ok {
-		return v
-	} else {
-		panic("http/client: not a response")
+func m2t(l *lua.State, m map[string][]string) {
+	l.NewTable(0, len(m))
+	for k, v := range m {
+		l.Push(k)
+		l.NewTable(len(v), 0)
+		for i, x := range v {
+			l.Push(i + 1)
+			l.Push(x)
+			l.SetTableRaw(-3)
+		}
+		l.SetTableRaw(-3)
 	}
 }
 
-func toForm(l *lua.State, i int) url.Values {
-	form := make(url.Values, l.Count(i))
+func t2m(l *lua.State, i int, m map[string][]string) map[string][]string {
+	if m == nil {
+		m = make(map[string][]string, l.Count(i))
+	}
 	l.ForEach(i, func() bool {
 		k := l.ToString(-2)
 		if l.GetMetaField(-1, "__pairs") != lua.TypeNil {
 			l.Pop(1)
 			l.ForEach(-1, func() bool {
-				form.Add(k, l.ToString(-1))
+				m[k] = append(m[k], l.ToString(-1))
 				return true
 			})
 		} else if l.GetMetaField(-1, "__len") != lua.TypeNil {
@@ -63,20 +70,20 @@ func toForm(l *lua.State, i int) url.Values {
 			for i := 1; i <= n; i++ {
 				l.Push(i)
 				l.GetTable(-2)
-				form.Add(k, l.ToString(-1))
+				m[k] = append(m[k], l.ToString(-1))
 				l.Pop(1)
 			}
 		} else if l.TypeOf(-1) == lua.TypeTable {
 			l.ForEachRaw(-1, func() bool {
-				form.Add(k, l.ToString(-1))
+				m[k] = append(m[k], l.ToString(-1))
 				return true
 			})
 		} else {
-			form.Add(k, l.ToString(-1))
+			m[k] = append(m[k], l.ToString(-1))
 		}
 		return true
 	})
-	return form
+	return m
 }
 
 func result(l *lua.State, resp *http.Response, err error) int {
@@ -94,16 +101,10 @@ func result(l *lua.State, resp *http.Response, err error) int {
 	return 1
 }
 
-func header(l *lua.State, h http.Header) {
-	l.NewTable(0, len(h))
-	for k, v := range h {
-		l.Push(k)
-		l.NewTable(len(v), 0)
-		for i, x := range v {
-			l.Push(i + 1)
-			l.Push(x)
-			l.SetTableRaw(-3)
-		}
-		l.SetTableRaw(-3)
+func toResp(l *lua.State, i int) response {
+	if v, ok := l.GetRaw(i).(response); ok {
+		return v
+	} else {
+		panic("http/client: not a response")
 	}
 }
