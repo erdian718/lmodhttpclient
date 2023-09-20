@@ -1,0 +1,4 @@
+github.com/ofunc/lua v1.1.1-0.20230915034149-c91349ba2deb h1:OX0xu7dEHBRbLAcKoyV5nrfGwPJyz/P4ZKDje4bytwA=
+github.com/ofunc/lua v1.1.1-0.20230915034149-c91349ba2deb/go.mod h1:d1rfQA5wnib1w6aIFCw5ocllGDV7vdClm60XlrZOJiM=
+golang.org/x/net v0.15.0 h1:ugBLEUaxABaB5AJqW9enI0ACdci2RUd4eP51NTBvuJ8=
+golang.org/x/net v0.15.0/go.mod h1:idbUs1IY1+zTqbi8yxTbhexhEEk5ur9LInksu6HrEpk=

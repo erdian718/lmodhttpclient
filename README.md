@@ -8,8 +8,8 @@
 package main
 
 import (
-	"ofunc/lmodhttpclient"
-	"ofunc/lua/util"
+	"github.com/ofunc/lmodhttpclient"
+	"github.com/ofunc/lua/util"
 )
 
 func main() {
