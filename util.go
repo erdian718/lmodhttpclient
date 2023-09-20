@@ -26,7 +26,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 
 	"golang.org/x/net/publicsuffix"
 )

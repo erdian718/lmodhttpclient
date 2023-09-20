@@ -28,7 +28,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 // Open opens the module.

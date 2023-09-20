@@ -25,7 +25,7 @@ package lmodhttpclient
 import (
 	"net/http"
 
-	"ofunc/lua"
+	"github.com/ofunc/lua"
 )
 
 type response struct {
